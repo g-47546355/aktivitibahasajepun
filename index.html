@@ -11,14 +11,17 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Gaya khusus untuk PDF */
+        /* Kawalan Ketat untuk Saiz A4 PDF */
         .pdf-page {
             width: 210mm;
-            min-height: 297mm;
-            padding: 20mm;
+            height: 296mm; /* Kurangkan 1mm untuk elak pagenation error */
+            padding: 15mm 20mm;
             margin: 0 auto;
             background: white;
             color: black;
+            overflow: hidden; /* Paksa kandungan kekal dalam kotak */
+            position: relative;
+            box-sizing: border-box;
         }
         
         .page-break {
@@ -137,31 +140,31 @@
         </div>
     </div>
 
-    <!-- Hidden Layout for PDF (Dioptimumkan untuk 2 muka surat) -->
+    <!-- Hidden Layout for PDF (Kawal ketat 2 muka surat) -->
     <div id="pdf-layout" class="hidden">
-        <!-- Muka Surat 1: Butiran & Ringkasan -->
+        <!-- Muka Surat 1 -->
         <div class="pdf-page font-serif">
-            <div class="border-b-4 border-blue-900 pb-6 mb-8 flex items-center gap-6">
-                <img src="https://i.postimg.cc/0jL0tPVw/image.png" class="w-16 h-16 object-contain">
+            <div class="border-b-4 border-blue-900 pb-4 mb-6 flex items-center gap-4">
+                <img src="https://i.postimg.cc/0jL0tPVw/image.png" class="w-14 h-14 object-contain">
                 <div>
-                    <h1 class="text-xl font-black uppercase text-blue-900">E-LAPORAN AKTIVITI BAHASA JEPUN</h1>
-                    <p class="text-[10px] font-bold text-gray-400">SMK AYER KEROH, MELAKA</p>
+                    <h1 class="text-lg font-black uppercase text-blue-900 leading-none">E-LAPORAN AKTIVITI BAHASA JEPUN</h1>
+                    <p class="text-[9px] font-bold text-gray-400 mt-1">SMK AYER KEROH, MELAKA</p>
                 </div>
             </div>
             
-            <div id="pdf-page-1-content" class="space-y-8 text-sm leading-relaxed">
-                <!-- Kandungan Muka 1 -->
+            <div id="pdf-page-1-content" class="space-y-6">
+                <!-- JS Populated -->
             </div>
         </div>
 
-        <!-- Muka Surat 2: Gambar & Refleksi -->
+        <!-- Muka Surat 2 -->
         <div class="pdf-page page-break font-serif">
-            <div class="border-b border-gray-200 pb-4 mb-8">
-                <h2 class="text-sm font-bold uppercase text-gray-400">Bahagian 2: Dokumentasi & Refleksi</h2>
+            <div class="border-b border-gray-200 pb-3 mb-6">
+                <h2 class="text-[10px] font-bold uppercase text-gray-400">Bahagian 2: Dokumentasi & Refleksi</h2>
             </div>
             
-            <div id="pdf-page-2-content" class="space-y-8 text-sm leading-relaxed">
-                <!-- Kandungan Muka 2 -->
+            <div id="pdf-page-2-content" class="space-y-6">
+                <!-- JS Populated -->
             </div>
         </div>
     </div>
@@ -215,74 +218,70 @@
         }
 
         function preparePDFContent(data) {
-            // Isi Muka Surat 1
+            // Muka Surat 1: Profil & Teks
             const page1 = document.getElementById('pdf-page-1-content');
             page1.innerHTML = `
-                <div class="grid grid-cols-2 gap-6 border-b pb-6">
+                <div class="grid grid-cols-2 gap-4 border-b pb-4 text-[11px]">
                     <div>
-                        <p class="text-[10px] uppercase text-gray-500 font-bold mb-1">Penyedia Laporan</p>
+                        <p class="text-[8px] uppercase text-gray-500 font-bold mb-0.5">Penyedia Laporan</p>
                         <p class="font-bold text-gray-800">${data.nama}</p>
                     </div>
                     <div>
-                        <p class="text-[10px] uppercase text-gray-500 font-bold mb-1">Masa & Kelas</p>
+                        <p class="text-[8px] uppercase text-gray-500 font-bold mb-0.5">Masa & Kelas</p>
                         <p class="font-bold text-gray-800">${data.masa || '-'} | ${data.kelas}</p>
                     </div>
                     <div>
-                        <p class="text-[10px] uppercase text-gray-500 font-bold mb-1">Tarikh</p>
-                        <p class="font-bold text-gray-800">${data.tarikh}</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] uppercase text-gray-500 font-bold mb-1">Hari</p>
-                        <p class="font-bold text-gray-800">${data.hari}</p>
+                        <p class="text-[8px] uppercase text-gray-500 font-bold mb-0.5">Tarikh / Hari</p>
+                        <p class="font-bold text-gray-800">${data.tarikh} (${data.hari})</p>
                     </div>
                 </div>
 
                 <div>
-                    <p class="text-[10px] uppercase text-blue-800 font-bold mb-2">Tajuk Aktiviti</p>
-                    <h2 class="text-2xl font-black uppercase text-gray-900 leading-tight">${data.tajuk}</h2>
+                    <p class="text-[8px] uppercase text-blue-800 font-bold mb-1">Tajuk Aktiviti</p>
+                    <h2 class="text-xl font-black uppercase text-gray-900 leading-tight">${data.tajuk}</h2>
                 </div>
 
-                <div class="grid grid-cols-1 gap-8 pt-4">
-                    <div class="bg-gray-50 p-6 rounded-xl border-l-4 border-blue-900">
-                        <p class="text-[10px] uppercase text-blue-900 font-bold mb-3">Objektif Aktiviti</p>
-                        <p class="text-gray-700 whitespace-pre-wrap">${data.objektif || 'Tiada maklumat disediakan.'}</p>
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-900">
+                        <p class="text-[9px] uppercase text-blue-900 font-bold mb-2">Objektif Aktiviti</p>
+                        <div class="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">${data.objektif || 'Tiada maklumat disediakan.'}</div>
                     </div>
-                    <div class="bg-gray-50 p-6 rounded-xl border-l-4 border-indigo-900">
-                        <p class="text-[10px] uppercase text-indigo-900 font-bold mb-3">Ringkasan Aktiviti</p>
-                        <p class="text-gray-700 whitespace-pre-wrap">${data.ringkasan || 'Tiada maklumat disediakan.'}</p>
+                    <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-900">
+                        <p class="text-[9px] uppercase text-indigo-900 font-bold mb-2">Ringkasan Aktiviti</p>
+                        <div class="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">${data.ringkasan || 'Tiada maklumat disediakan.'}</div>
                     </div>
                 </div>
             `;
 
-            // Isi Muka Surat 2
+            // Muka Surat 2: Gambar & Refleksi
             const page2 = document.getElementById('pdf-page-2-content');
             const validImages = images.filter(i => i);
             page2.innerHTML = `
                 <div>
-                    <p class="text-[10px] uppercase text-gray-500 font-bold mb-4">Dokumentasi Gambar</p>
-                    <div class="grid grid-cols-3 gap-3">
+                    <p class="text-[9px] uppercase text-gray-500 font-bold mb-3">Dokumentasi Gambar</p>
+                    <div class="grid grid-cols-3 gap-2">
                         ${validImages.length > 0 
-                            ? validImages.map(i => `<div class="aspect-square rounded-lg overflow-hidden border border-gray-200"><img src="${i}" class="w-full h-full object-cover"></div>`).join('')
-                            : '<p class="text-gray-400 italic text-xs col-span-3">Tiada gambar disertakan.</p>'
+                            ? validImages.map(i => `<div class="aspect-video rounded-md overflow-hidden border border-gray-200 shadow-sm"><img src="${i}" class="w-full h-full object-cover"></div>`).join('')
+                            : '<p class="text-gray-400 italic text-[10px] col-span-3">Tiada gambar disertakan.</p>'
                         }
                     </div>
                 </div>
 
-                <div class="pt-8">
-                    <div class="bg-blue-50 p-8 rounded-2xl border border-blue-100">
-                        <p class="text-[10px] uppercase text-blue-900 font-bold mb-4">Refleksi & Impak</p>
-                        <p class="text-gray-800 italic leading-relaxed whitespace-pre-wrap">"${data.refleksi || 'Tiada refleksi disediakan.'}"</p>
+                <div class="pt-4">
+                    <div class="bg-blue-50 p-6 rounded-xl border border-blue-100">
+                        <p class="text-[9px] uppercase text-blue-900 font-bold mb-2">Refleksi & Impak</p>
+                        <p class="text-gray-800 italic text-[11px] leading-relaxed whitespace-pre-wrap">"${data.refleksi || 'Tiada refleksi disediakan.'}"</p>
                     </div>
                 </div>
 
-                <div class="flex justify-between pt-16">
+                <div class="flex justify-between pt-10 px-4">
                     <div class="text-center">
-                        <div class="w-40 border-b border-black mb-2"></div>
-                        <p class="text-[10px] font-bold uppercase">Tandatangan Penyedia</p>
+                        <div class="w-32 border-b border-black mb-1"></div>
+                        <p class="text-[8px] font-bold uppercase">Tandatangan Penyedia</p>
                     </div>
                     <div class="text-center">
-                        <div class="w-40 border-b border-black mb-2"></div>
-                        <p class="text-[10px] font-bold uppercase">Disahkan Oleh</p>
+                        <div class="w-32 border-b border-black mb-1"></div>
+                        <p class="text-[8px] font-bold uppercase">Disahkan Oleh</p>
                     </div>
                 </div>
             `;
@@ -309,18 +308,19 @@
             document.getElementById('status-loading').classList.remove('hidden');
 
             try {
-                // Sediakan kandungan PDF secara dinamik
                 preparePDFContent(data);
 
                 const element = document.getElementById('pdf-layout');
                 element.classList.remove('hidden');
                 
+                // Konfigurasi html2pdf untuk mengelakkan pecah halaman
                 const opt = { 
                     margin: 0, 
                     filename: `Laporan_${data.tarikh}.pdf`, 
                     image: { type: 'jpeg', quality: 0.98 }, 
-                    html2canvas: { scale: 2, useCORS: true }, 
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+                    html2canvas: { scale: 2, useCORS: true, logging: false }, 
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
                 };
 
                 const pdfBlob = await html2pdf().from(element).set(opt).output('blob');
