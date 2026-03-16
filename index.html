@@ -64,6 +64,21 @@
                 <label class="text-[9px] font-black text-blue-500 uppercase mb-2 block tracking-widest">Hari</label>
                 <input type="text" id="hari" readonly class="w-full bg-slate-800 text-slate-400 rounded-xl p-3 text-center font-black uppercase text-xs" placeholder="HARI">
             </div>
+            <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5">
+                <label class="text-[9px] font-black text-blue-500 uppercase mb-2 block tracking-widest">Masa</label>
+                <input type="text" id="masa" placeholder="Contoh: 8:00 AM" class="w-full bg-slate-950/50 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-500 text-sm">
+            </div>
+            <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5">
+                <label class="text-[9px] font-black text-blue-500 uppercase mb-2 block tracking-widest">Kelas</label>
+                <select id="kelas" class="w-full bg-slate-950/50 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-500 text-sm">
+                    <option value="1 Alpha">1 Alpha</option>
+                    <option value="2 Alpha">2 Alpha</option>
+                    <option value="3 Alpha">3 Alpha</option>
+                    <option value="4 Alpha">4 Alpha</option>
+                    <option value="5 Alpha">5 Alpha</option>
+                    <option value="Lain-lain">Lain-lain</option>
+                </select>
+            </div>
         </div>
 
         <section class="bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/5 space-y-6">
@@ -174,6 +189,8 @@
                 nama: document.getElementById('namaPenyedia').value,
                 tarikh: document.getElementById('tarikh').value,
                 hari: document.getElementById('hari').value,
+                masa: document.getElementById('masa').value,
+                kelas: document.getElementById('kelas').value,
                 tajuk: document.getElementById('tajukAktiviti').value,
                 objektif: document.getElementById('objektif').value,
                 ringkasan: document.getElementById('ringkasan').value,
@@ -194,6 +211,8 @@
                     <div class="grid grid-cols-2 gap-4 border-b pb-4">
                         <div><strong>Penyedia:</strong> ${data.nama}</div>
                         <div><strong>Tarikh:</strong> ${data.tarikh} (${data.hari})</div>
+                        <div><strong>Masa:</strong> ${data.masa || '-'}</div>
+                        <div><strong>Kelas:</strong> ${data.kelas}</div>
                     </div>
                     <div><h2 class="text-lg font-bold">${data.tajuk}</h2></div>
                     <div><strong>Objektif:</strong><br>${data.objektif}</div>
