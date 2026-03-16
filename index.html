@@ -9,162 +9,175 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Kawalan Ketat untuk Saiz A4 PDF */
+        /* KAWALAN KETAT A4 - ELAK PECAH MUKA SURAT */
         .pdf-page {
             width: 210mm;
-            height: 296mm; /* Kurangkan 1mm untuk elak pagenation error */
+            height: 297mm;
             padding: 15mm 20mm;
-            margin: 0 auto;
+            margin: 0;
             background: white;
             color: black;
-            overflow: hidden; /* Paksa kandungan kekal dalam kotak */
+            overflow: hidden;
             position: relative;
             box-sizing: border-box;
+            page-break-after: always;
         }
-        
-        .page-break {
-            page-break-before: always;
+
+        /* Kandungan Muka Surat 2 - Kedudukan Tandatangan Tetap */
+        .signature-section {
+            position: absolute;
+            bottom: 25mm;
+            left: 20mm;
+            right: 20mm;
         }
 
         @media print {
+            body { background: white; }
             .no-print { display: none !important; }
-            #pdf-layout { display: block !important; }
         }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-200 min-h-screen pb-32">
 
     <div id="app" class="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
-        <!-- Notifikasi Status -->
-        <div id="status-error" class="hidden fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-red-600 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/20">
-            <span id="error-msg" class="text-sm font-bold"></span>
-            <button onclick="closeError()">✕</button>
-        </div>
-
+        <!-- Notifikasi -->
         <div id="status-loading" class="hidden fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
             <div class="bg-slate-900 p-10 rounded-[3rem] border border-white/10 shadow-2xl text-center">
                 <div class="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <h2 class="text-xl font-black uppercase">Sedang Menghantar...</h2>
-                <p class="text-slate-500 text-sm mt-2">Laporan sedang disimpan ke Google Drive.</p>
+                <h2 class="text-xl font-black uppercase">Menghantar Laporan...</h2>
+                <p class="text-slate-500 text-sm mt-2">Memproses PDF 2 Muka Surat ke Drive.</p>
             </div>
         </div>
 
         <div id="status-success" class="hidden fixed top-8 left-1/2 -translate-x-1/2 z-[100] bg-emerald-600 px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 animate-bounce">
-            <span class="font-black uppercase tracking-widest text-sm">Berjaya Dihantar ke Drive!</span>
+            <span class="font-black uppercase tracking-widest text-sm text-white">Berjaya Dihantar!</span>
         </div>
 
-        <!-- Header -->
+        <!-- Header Input -->
         <header class="flex flex-col md:flex-row gap-6 items-center bg-slate-900/50 p-8 rounded-[2.5rem] border border-white/5 shadow-xl">
-            <div class="w-24 h-24 bg-white rounded-3xl p-3 flex items-center justify-center shadow-inner">
-                <img src="https://i.postimg.cc/0jL0tPVw/image.png" class="w-full h-full object-contain" alt="Logo Sekolah">
+            <div class="w-20 h-20 bg-white rounded-2xl p-2">
+                <img src="https://i.postimg.cc/0jL0tPVw/image.png" class="w-full h-full object-contain">
             </div>
             <div class="text-center md:text-left">
-                <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 uppercase tracking-tighter">
-                    E-LAPORAN AKTIVITI BAHASA JEPUN
-                </h1>
-                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">SMK Ayer Keroh, Melaka</p>
+                <h1 class="text-2xl font-black text-white uppercase tracking-tighter">E-LAPORAN BAHASA JEPUN</h1>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">SMK Ayer Keroh, Melaka</p>
             </div>
         </header>
 
-        <!-- Form Inputs -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5 lg:col-span-2">
-                <label class="text-[9px] font-black text-blue-500 uppercase mb-2 block tracking-widest">Penyedia Laporan</label>
-                <input type="text" id="namaPenyedia" placeholder="Nama Guru" class="w-full bg-slate-950/50 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm">
-            </div>
-            <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5">
-                <label class="text-[9px] font-black text-blue-500 uppercase mb-2 block tracking-widest">Tarikh</label>
-                <input type="date" id="tarikh" onchange="updateDay()" class="w-full bg-slate-950/50 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-500 text-sm">
-            </div>
-            <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5">
-                <label class="text-[9px] font-black text-blue-500 uppercase mb-2 block tracking-widest">Hari</label>
-                <input type="text" id="hari" readonly class="w-full bg-slate-800 text-slate-400 rounded-xl p-3 text-center font-black uppercase text-xs" placeholder="HARI">
-            </div>
-            <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5">
-                <label class="text-[9px] font-black text-blue-500 uppercase mb-2 block tracking-widest">Masa</label>
-                <input type="text" id="masa" placeholder="Contoh: 8:00 AM" class="w-full bg-slate-950/50 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-500 text-sm">
-            </div>
-            <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5">
-                <label class="text-[9px] font-black text-blue-500 uppercase mb-2 block tracking-widest">Kelas</label>
-                <select id="kelas" class="w-full bg-slate-950/50 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-500 text-sm">
-                    <option value="1 Alpha">1 Alpha</option>
-                    <option value="2 Alpha">2 Alpha</option>
-                    <option value="3 Alpha">3 Alpha</option>
-                    <option value="4 Alpha">4 Alpha</option>
-                    <option value="5 Alpha">5 Alpha</option>
-                    <option value="Lain-lain">Lain-lain</option>
-                </select>
-            </div>
+        <!-- Borang -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="text" id="namaPenyedia" placeholder="Nama Guru" class="md:col-span-2 bg-slate-900 border border-white/10 rounded-2xl p-4 outline-none focus:border-blue-500 font-bold">
+            <input type="date" id="tarikh" onchange="updateDay()" class="bg-slate-900 border border-white/10 rounded-2xl p-4 outline-none focus:border-blue-500">
+            <input type="text" id="hari" readonly placeholder="Hari" class="bg-slate-800 text-slate-400 rounded-2xl p-4 text-center font-bold">
+            <input type="text" id="masa" placeholder="Masa (cth: 12:10 PM)" class="bg-slate-900 border border-white/10 rounded-2xl p-4 outline-none focus:border-blue-500">
+            <select id="kelas" class="bg-slate-900 border border-white/10 rounded-2xl p-4 outline-none focus:border-blue-500">
+                <option value="1 Alpha">1 Alpha</option>
+                <option value="2 Alpha">2 Alpha</option>
+                <option value="3 Alpha">3 Alpha</option>
+                <option value="4 Alpha">4 Alpha</option>
+                <option value="5 Alpha">5 Alpha</option>
+            </select>
         </div>
 
-        <section class="bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h2 class="font-black uppercase tracking-wider text-sm border-b border-white/5 pb-4">Butiran Aktiviti</h2>
-            <div>
-                <label class="text-[10px] font-black text-blue-500 uppercase mb-2 block tracking-widest">Tajuk Aktiviti</label>
-                <input type="text" id="tajukAktiviti" placeholder="Masukkan tajuk utama..." class="w-full bg-transparent border-b-2 border-white/5 py-3 text-2xl font-black focus:border-blue-500 outline-none transition-all uppercase">
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section class="bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/5 space-y-4">
+            <label class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Tajuk Aktiviti</label>
+            <input type="text" id="tajukAktiviti" placeholder="Contoh: 福笑い" class="w-full bg-transparent border-b-2 border-white/10 py-2 text-xl font-black focus:border-blue-500 outline-none uppercase">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                 <div>
                     <label class="text-[9px] font-black text-indigo-400 uppercase mb-2 block">Objektif</label>
-                    <textarea id="objektif" rows="4" class="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 outline-none text-sm"></textarea>
+                    <textarea id="objektif" rows="5" class="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 text-sm outline-none"></textarea>
                 </div>
                 <div>
                     <label class="text-[9px] font-black text-indigo-400 uppercase mb-2 block">Ringkasan</label>
-                    <textarea id="ringkasan" rows="4" class="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 outline-none text-sm"></textarea>
+                    <textarea id="ringkasan" rows="5" class="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 text-sm outline-none"></textarea>
                 </div>
             </div>
         </section>
 
         <!-- Gambar -->
         <section class="bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/5">
-            <h2 class="text-[10px] font-black text-blue-500 uppercase mb-6 block tracking-widest">Dokumentasi Bergambar (Maks 9)</h2>
-            <div id="image-grid" class="grid grid-cols-3 gap-3">
-                <!-- JS will populate this -->
-            </div>
+            <h2 class="text-[10px] font-black text-blue-500 uppercase mb-4 tracking-widest">Gambar Aktiviti (Maks 6 untuk saiz 2 muka surat)</h2>
+            <div id="image-grid" class="grid grid-cols-3 gap-3"></div>
         </section>
 
-        <!-- Refleksi Paling Bawah -->
-        <section class="bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/5 space-y-4">
-            <h2 class="font-black uppercase tracking-wider text-sm border-b border-white/5 pb-4 text-blue-500">Refleksi & Impak</h2>
-            <textarea id="refleksi" rows="4" class="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 outline-none text-sm" placeholder="Tuliskan refleksi anda di sini..."></textarea>
+        <!-- Refleksi -->
+        <section class="bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/5">
+            <label class="text-[10px] font-black text-blue-500 uppercase mb-4 block tracking-widest">Refleksi</label>
+            <textarea id="refleksi" rows="4" class="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 text-sm outline-none"></textarea>
         </section>
 
-        <!-- Footer Actions -->
-        <div class="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-white/5 p-6 z-40">
-            <div class="max-w-4xl mx-auto flex gap-4">
-                <button onclick="window.print()" class="hidden md:flex flex-1 items-center justify-center bg-slate-900 hover:bg-slate-800 border border-white/10 py-5 rounded-3xl font-bold uppercase text-[10px] tracking-[0.2em]">Cetak / Simpan PDF</button>
-                <button onclick="handleUpload()" class="flex-[2] bg-blue-600 hover:bg-blue-500 py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-blue-600/20">Hantar ke Google Drive</button>
-            </div>
+        <!-- Butang Hantar -->
+        <div class="fixed bottom-0 left-0 right-0 bg-slate-950/90 p-6 border-t border-white/5 flex justify-center">
+            <button onclick="handleUpload()" class="w-full max-w-lg bg-blue-600 hover:bg-blue-500 py-5 rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl transition-all">
+                Hantar & Jana PDF (2 Muka Surat)
+            </button>
         </div>
     </div>
 
-    <!-- Hidden Layout for PDF (Kawal ketat 2 muka surat) -->
+    <!-- STRUKTUR PDF TERSEMBUNYI -->
     <div id="pdf-layout" class="hidden">
-        <!-- Muka Surat 1 -->
+        <!-- MUKA SURAT 1 -->
         <div class="pdf-page font-serif">
-            <div class="border-b-4 border-blue-900 pb-4 mb-6 flex items-center gap-4">
-                <img src="https://i.postimg.cc/0jL0tPVw/image.png" class="w-14 h-14 object-contain">
+            <div class="flex items-center gap-4 border-b-2 border-gray-800 pb-4 mb-6">
+                <img src="https://i.postimg.cc/0jL0tPVw/image.png" class="w-12 h-12">
                 <div>
-                    <h1 class="text-lg font-black uppercase text-blue-900 leading-none">E-LAPORAN AKTIVITI BAHASA JEPUN</h1>
-                    <p class="text-[9px] font-bold text-gray-400 mt-1">SMK AYER KEROH, MELAKA</p>
+                    <h1 class="text-base font-black uppercase leading-none">E-LAPORAN AKTIVITI BAHASA JEPUN</h1>
+                    <p class="text-[8px] font-bold text-gray-500 mt-1">SMK AYER KEROH, MELAKA</p>
                 </div>
             </div>
-            
-            <div id="pdf-page-1-content" class="space-y-6">
-                <!-- JS Populated -->
+
+            <div id="p1-header" class="grid grid-cols-2 gap-x-10 gap-y-4 text-[10px] mb-6">
+                <!-- Diisi oleh JS -->
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <p class="text-[8px] font-bold text-blue-800 uppercase mb-1">Tajuk Aktiviti</p>
+                    <h2 id="p1-tajuk" class="text-lg font-black uppercase border-b border-gray-100 pb-2"></h2>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-[8px] font-bold text-gray-400 uppercase mb-2">Objektif</p>
+                    <div id="p1-objektif" class="text-[10px] leading-relaxed text-gray-700"></div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-[8px] font-bold text-gray-400 uppercase mb-2">Ringkasan Aktiviti</p>
+                    <div id="p1-ringkasan" class="text-[10px] leading-relaxed text-gray-700"></div>
+                </div>
             </div>
         </div>
 
-        <!-- Muka Surat 2 -->
-        <div class="pdf-page page-break font-serif">
-            <div class="border-b border-gray-200 pb-3 mb-6">
-                <h2 class="text-[10px] font-bold uppercase text-gray-400">Bahagian 2: Dokumentasi & Refleksi</h2>
+        <!-- MUKA SURAT 2 -->
+        <div class="pdf-page font-serif">
+            <div class="border-b border-gray-200 pb-2 mb-6">
+                <h2 class="text-[8px] font-bold uppercase text-gray-400 tracking-widest">Dokumentasi & Refleksi</h2>
             </div>
-            
-            <div id="pdf-page-2-content" class="space-y-6">
-                <!-- JS Populated -->
+
+            <div class="space-y-6">
+                <div>
+                    <p class="text-[8px] font-bold text-gray-400 uppercase mb-3">Gambar Aktiviti</p>
+                    <div id="p2-images" class="grid grid-cols-3 gap-2">
+                        <!-- Diisi oleh JS -->
+                    </div>
+                </div>
+
+                <div class="bg-blue-50/50 p-5 rounded-xl border border-blue-100">
+                    <p class="text-[8px] font-bold text-blue-900 uppercase mb-2">Refleksi & Impak</p>
+                    <div id="p2-refleksi" class="text-[10px] italic leading-relaxed text-gray-800"></div>
+                </div>
+            </div>
+
+            <!-- Tandatangan (Kedudukan Tetap di Bawah) -->
+            <div class="signature-section flex justify-between">
+                <div class="text-center">
+                    <div class="w-32 border-b border-black mb-1"></div>
+                    <p class="text-[7px] font-bold uppercase">Tandatangan Penyedia</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-32 border-b border-black mb-1"></div>
+                    <p class="text-[7px] font-bold uppercase">Disahkan Oleh</p>
+                </div>
             </div>
         </div>
     </div>
@@ -172,14 +185,13 @@
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzb8-5rmh0a5YD7ZlTY3c4D5SeBh3jCk2Q9W6NZPw7WxKJcYdlDW2epSC9y_4N1jJw/exec";
         const SHEET_ID = "1cGwGweJ_1IlvZlviMY5FMyaXGpqaQfndrrV2m2ID3NQ";
-        let images = Array(9).fill(null);
+        let images = Array(6).fill(null);
 
         function updateDay() {
-            const dateInput = document.getElementById('tarikh').value;
-            if (dateInput) {
+            const date = document.getElementById('tarikh').value;
+            if (date) {
                 const days = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
-                const day = days[new Date(dateInput).getDay()];
-                document.getElementById('hari').value = day;
+                document.getElementById('hari').value = days[new Date(date).getDay()];
             }
         }
 
@@ -188,103 +200,40 @@
             grid.innerHTML = '';
             images.forEach((img, idx) => {
                 const div = document.createElement('div');
-                div.className = "aspect-square bg-slate-950 rounded-2xl border-2 border-dashed border-white/5 relative overflow-hidden flex items-center justify-center cursor-pointer";
+                div.className = "aspect-video bg-slate-900 rounded-xl border-2 border-dashed border-white/5 relative overflow-hidden flex items-center justify-center";
                 if (img) {
-                    div.innerHTML = `<img src="${img}" class="w-full h-full object-cover">
-                                     <button onclick="removeImg(${idx})" class="absolute top-1 right-1 bg-red-600 p-1 rounded">✕</button>`;
+                    div.innerHTML = `<img src="${img}" class="w-full h-full object-cover"><button onclick="removeImg(${idx})" class="absolute top-1 right-1 bg-red-600 text-[8px] p-1 rounded">✕</button>`;
                 } else {
-                    div.innerHTML = `<label class="w-full h-full flex items-center justify-center cursor-pointer">
-                                        <span class="text-2xl text-slate-800">+</span>
-                                        <input type="file" class="hidden" accept="image/*" onchange="uploadImg(event, ${idx})">
-                                     </label>`;
+                    div.innerHTML = `<label class="w-full h-full flex items-center justify-center cursor-pointer"><span class="text-slate-700">+</span><input type="file" class="hidden" accept="image/*" onchange="uploadImg(event, ${idx})"></label>`;
                 }
                 grid.appendChild(div);
             });
         }
 
         function uploadImg(e, idx) {
-            const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                images[idx] = ev.target.result;
-                initImageGrid();
-            };
-            reader.readAsDataURL(file);
+            reader.onload = (ev) => { images[idx] = ev.target.result; initImageGrid(); };
+            reader.readAsDataURL(e.target.files[0]);
         }
 
-        function removeImg(idx) {
-            images[idx] = null;
-            initImageGrid();
-        }
+        function removeImg(idx) { images[idx] = null; initImageGrid(); }
 
-        function preparePDFContent(data) {
-            // Muka Surat 1: Profil & Teks
-            const page1 = document.getElementById('pdf-page-1-content');
-            page1.innerHTML = `
-                <div class="grid grid-cols-2 gap-4 border-b pb-4 text-[11px]">
-                    <div>
-                        <p class="text-[8px] uppercase text-gray-500 font-bold mb-0.5">Penyedia Laporan</p>
-                        <p class="font-bold text-gray-800">${data.nama}</p>
-                    </div>
-                    <div>
-                        <p class="text-[8px] uppercase text-gray-500 font-bold mb-0.5">Masa & Kelas</p>
-                        <p class="font-bold text-gray-800">${data.masa || '-'} | ${data.kelas}</p>
-                    </div>
-                    <div>
-                        <p class="text-[8px] uppercase text-gray-500 font-bold mb-0.5">Tarikh / Hari</p>
-                        <p class="font-bold text-gray-800">${data.tarikh} (${data.hari})</p>
-                    </div>
-                </div>
-
-                <div>
-                    <p class="text-[8px] uppercase text-blue-800 font-bold mb-1">Tajuk Aktiviti</p>
-                    <h2 class="text-xl font-black uppercase text-gray-900 leading-tight">${data.tajuk}</h2>
-                </div>
-
-                <div class="space-y-4">
-                    <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-900">
-                        <p class="text-[9px] uppercase text-blue-900 font-bold mb-2">Objektif Aktiviti</p>
-                        <div class="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">${data.objektif || 'Tiada maklumat disediakan.'}</div>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-900">
-                        <p class="text-[9px] uppercase text-indigo-900 font-bold mb-2">Ringkasan Aktiviti</p>
-                        <div class="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">${data.ringkasan || 'Tiada maklumat disediakan.'}</div>
-                    </div>
-                </div>
+        function populatePDF(data) {
+            // Muka 1
+            document.getElementById('p1-header').innerHTML = `
+                <div><p class="text-gray-400 uppercase text-[7px] mb-0.5">Penyedia</p><p class="font-bold uppercase">${data.nama}</p></div>
+                <div><p class="text-gray-400 uppercase text-[7px] mb-0.5">Masa & Kelas</p><p class="font-bold uppercase">${data.masa} | ${data.kelas}</p></div>
+                <div><p class="text-gray-400 uppercase text-[7px] mb-0.5">Tarikh</p><p class="font-bold uppercase">${data.tarikh}</p></div>
+                <div><p class="text-gray-400 uppercase text-[7px] mb-0.5">Hari</p><p class="font-bold uppercase">${data.hari}</p></div>
             `;
+            document.getElementById('p1-tajuk').innerText = data.tajuk;
+            document.getElementById('p1-objektif').innerText = data.objektif;
+            document.getElementById('p1-ringkasan').innerText = data.ringkasan;
 
-            // Muka Surat 2: Gambar & Refleksi
-            const page2 = document.getElementById('pdf-page-2-content');
-            const validImages = images.filter(i => i);
-            page2.innerHTML = `
-                <div>
-                    <p class="text-[9px] uppercase text-gray-500 font-bold mb-3">Dokumentasi Gambar</p>
-                    <div class="grid grid-cols-3 gap-2">
-                        ${validImages.length > 0 
-                            ? validImages.map(i => `<div class="aspect-video rounded-md overflow-hidden border border-gray-200 shadow-sm"><img src="${i}" class="w-full h-full object-cover"></div>`).join('')
-                            : '<p class="text-gray-400 italic text-[10px] col-span-3">Tiada gambar disertakan.</p>'
-                        }
-                    </div>
-                </div>
-
-                <div class="pt-4">
-                    <div class="bg-blue-50 p-6 rounded-xl border border-blue-100">
-                        <p class="text-[9px] uppercase text-blue-900 font-bold mb-2">Refleksi & Impak</p>
-                        <p class="text-gray-800 italic text-[11px] leading-relaxed whitespace-pre-wrap">"${data.refleksi || 'Tiada refleksi disediakan.'}"</p>
-                    </div>
-                </div>
-
-                <div class="flex justify-between pt-10 px-4">
-                    <div class="text-center">
-                        <div class="w-32 border-b border-black mb-1"></div>
-                        <p class="text-[8px] font-bold uppercase">Tandatangan Penyedia</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="w-32 border-b border-black mb-1"></div>
-                        <p class="text-[8px] font-bold uppercase">Disahkan Oleh</p>
-                    </div>
-                </div>
-            `;
+            // Muka 2
+            const imgContainer = document.getElementById('p2-images');
+            imgContainer.innerHTML = images.filter(i => i).map(i => `<div class="aspect-video rounded border border-gray-100 overflow-hidden"><img src="${i}" class="w-full h-full object-cover"></div>`).join('');
+            document.getElementById('p2-refleksi').innerText = data.refleksi || "Tiada refleksi disediakan.";
         }
 
         async function handleUpload() {
@@ -300,27 +249,21 @@
                 refleksi: document.getElementById('refleksi').value
             };
 
-            if (!data.nama || !data.tarikh || !data.tajuk) {
-                showError("Sila isi Nama, Tarikh dan Tajuk.");
-                return;
-            }
+            if (!data.nama || !data.tarikh || !data.tajuk) return alert("Sila lengkapkan butiran!");
 
             document.getElementById('status-loading').classList.remove('hidden');
 
             try {
-                preparePDFContent(data);
-
+                populatePDF(data);
                 const element = document.getElementById('pdf-layout');
                 element.classList.remove('hidden');
-                
-                // Konfigurasi html2pdf untuk mengelakkan pecah halaman
-                const opt = { 
-                    margin: 0, 
-                    filename: `Laporan_${data.tarikh}.pdf`, 
-                    image: { type: 'jpeg', quality: 0.98 }, 
-                    html2canvas: { scale: 2, useCORS: true, logging: false }, 
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+
+                const opt = {
+                    margin: 0,
+                    filename: `Laporan_${data.tarikh}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
                 const pdfBlob = await html2pdf().from(element).set(opt).output('blob');
@@ -330,36 +273,18 @@
                 reader.readAsDataURL(pdfBlob);
                 reader.onloadend = async () => {
                     const base64 = reader.result.split(',')[1];
-                    const payload = {
-                        sheetId: SHEET_ID,
-                        pdfBase64: base64,
-                        filename: `Laporan_${data.tarikh}_${data.nama}.pdf`,
-                        data: data
-                    };
-
-                    await fetch(WEB_APP_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        body: JSON.stringify(payload)
-                    });
+                    const payload = { sheetId: SHEET_ID, pdfBase64: base64, filename: `Laporan_${data.tarikh}_${data.nama}.pdf`, data: data };
+                    
+                    await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
 
                     document.getElementById('status-loading').classList.add('hidden');
                     document.getElementById('status-success').classList.remove('hidden');
-                    setTimeout(() => document.getElementById('status-success').classList.add('hidden'), 5000);
+                    setTimeout(() => document.getElementById('status-success').classList.add('hidden'), 3000);
                 };
             } catch (e) {
+                alert("Ralat: " + e.message);
                 document.getElementById('status-loading').classList.add('hidden');
-                showError("Ralat: " + e.message);
             }
-        }
-
-        function showError(msg) {
-            document.getElementById('error-msg').innerText = msg;
-            document.getElementById('status-error').classList.remove('hidden');
-        }
-
-        function closeError() {
-            document.getElementById('status-error').classList.add('hidden');
         }
 
         initImageGrid();
